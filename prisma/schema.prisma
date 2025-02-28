@@ -1,0 +1,64 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./database.sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  username String
+  email    String  @unique // Benzersiz e-posta adresi
+  password String
+  role     String  @default("user") // Kullanıcı rolleri: "admin" veya "user"
+  orders   Order[]
+}
+
+model Product {
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  price      Float
+  stock      Int
+  isActive   Boolean     @default(true) // Ürün aktif mi
+  OrderItem  OrderItem[]
+  Category   Category?   @relation(fields: [categoryId], references: [id])
+  categoryId Int?
+  images     Image[] // Bir ürünün birden fazla görseli olabilir
+}
+
+model Image {
+  id        Int     @id @default(autoincrement())
+  url       String // Görsel URL'si
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  userId          Int
+  User            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items           OrderItem[]
+  price           Int // Toplam fiyat
+  status          String      @default("Ödeme Bekleniyor")
+  paymentType     String      @default("Kart")
+  deliveryAddress String?
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  Order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Product   Product @relation(fields: [productId], references: [id])
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  products    Product[] // Kategorinin tüm ürünleri
+}
